@@ -70,21 +70,28 @@
         const outputEl = getElementById("o");
         const searchEl = getElementById("s");
 
+        const codePointAt = (char) => char.codePointAt();
+        const fromCodePoint = String.fromCodePoint;
+        const Ui8A = Uint8Array;
+
+        const chunkedbtoa = (array) => {
+            let base64 = "";
+            for (let i = 0; i < array.length; i += 0x4000) {
+                base64 += fromCodePoint(...array.subarray(i, i + 0x4000));
+            }
+            return btoa(base64);
+        };
+
         let inputTimeout, toolFn, searchResults = [];
 
         const tools = [
-            ["Base64 Decode", (t) => atob(t)],
-            ["Base64 Encode", (t) => btoa(t)],
-            ["Caesar Cipher", (t) => `Shift  Message\n${Array.from({ length: 25 }, (_, i) => (`    ${i + 1}  `.slice(-7) + t.replace(/[a-z]/gi, (c) => String.fromCharCode(((c.charCodeAt() & 31) + i) % 26 + (c > "Z" ? 97 : 65))))).join("\n")}`],
+            ["Base64 Decode", (t) => new TextDecoder().decode(Ui8A.from(atob(t), codePointAt))],
+            ["Base64 Encode", (t) => chunkedbtoa(new TextEncoder().encode(t))],
+            ["Caesar Cipher", (t) => `Shift  Message\n${Array.from({ length: 25 }, (_, i) => (`    ${i + 1}  `.slice(-7) + t.replace(/[a-z]/gi, (c) => fromCodePoint(((codePointAt(c) & 31) + i) % 26 + (c > "Z" ? 97 : 65))))).join("\n")}`],
             ["Certain Length Text", (t) => "a".repeat(parseInt(t))],
             ["HTML Data URL", async (t) => {
                 const r = Response;
-                const array = new Uint8Array(await new r(new r(t).body.pipeThrough(new CompressionStream("deflate"))).arrayBuffer());
-                let base64 = "";
-                for (let i = 0; i < array.length; i += 0x4000) {
-                    base64 += String.fromCharCode(...array.subarray(i, i + 0x4000));
-                }
-                return `data:text/html,<script>a=Uint8Array,r=Response,new r(new r(a.from(atob("${btoa(base64)}"),c=>c.charCodeAt())).body.pipeThrough(new DecompressionStream("deflate"))).text().then((t,d=document)=>(d.open(),d.write(t),d.close()))<\/script>`;
+                return `data:text/html,<script>a=Uint8Array,r=Response,new r(new r(a.from(atob("${chunkedbtoa(new Ui8A(await new r(new r(t).body.pipeThrough(new CompressionStream("deflate"))).arrayBuffer()))}"),c=>c.charCodeAt())).body.pipeThrough(new DecompressionStream("deflate"))).text().then((t,d=document)=>(d.open(),d.write(t),d.close()))<\/script>`;
             }],
             ["JSON Beautify", (t) => JSON.stringify(JSON.parse(t), null, 4)],
             ["JSON Minify", (t) => JSON.stringify(JSON.parse(t))],
@@ -94,8 +101,8 @@
                     charMap.set(char, (charMap.get(char) || 0) + 1);
                 }
                 return "Count  Code    Char\n" + Array.from(charMap).sort(
-                    ([a], [b]) => a.codePointAt() - b.codePointAt()
-                ).map(([char, count]) => `    ${count}  `.slice(-7) + `${char.codePointAt().toString(16).toUpperCase()}       `.slice(0, 8) + char.replace(/\n/g, "\\n").replace(/\t/g, "\\t")).join("\n");
+                    ([a], [b]) => codePointAt(a) - codePointAt(b)
+                ).map(([char, count]) => `    ${count}  `.slice(-7) + `${codePointAt(char).toString(16).toUpperCase()}       `.slice(0, 8) + char.replace(/\n/g, "\\n").replace(/\t/g, "\\t")).join("\n");
             }],
             ["URL Decode", (t) => decodeURIComponent(t)],
             ["URL Encode", (t) => encodeURIComponent(t)],

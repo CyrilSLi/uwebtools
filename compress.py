@@ -7,7 +7,6 @@ subprocess.run(["npx", "html-minifier-next", "-v", "-i", abs_path("index.html"),
 
 with open(abs_path("index.min.html"), "rb") as f:
     data = base64.b64encode(zlib.compress(f.read(), 9)).decode("utf-8")
-os.remove(abs_path("index.min.html"))
 
 with open(abs_path("index.txt"), "w") as f:
     f.write(f'data:text/html,<script>a=Uint8Array,r=Response,new r(new r(a.from(atob("{data}"),c=>c.charCodeAt())).body.pipeThrough(new DecompressionStream("deflate"))).text().then((t,d=document)=>(d.open(),d.write(t),d.close()))</script>')
