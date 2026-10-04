@@ -1,10 +1,8 @@
 <!DOCTYPE html>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>uwebtools</title>
 <style>
     * {
-        touch-action: manipulation;
         margin: 0px;
         padding: 0px;
         font: normal 16px arial, sans-serif;
@@ -24,20 +22,20 @@
         overflow: hidden;
         padding: 5px;
     }
-    #e, header {
+    #e, #h {
         display: flex;
         margin: 5px;
     }
     #e, #s, #o {
         flex: 1;
     }
-    header {
+    #h {
         gap: 10px;
     }
     #i, #o {
         font-family: monospace;
     }
-    #i, #o, input {
+    #i, #o, #s {
         padding: 7px;
         border: 2px solid black;
         border-radius: 7px;
@@ -52,10 +50,10 @@
     }
 </style>
 <div id="a">
-    <header>
+    <div id="h">
         <h1>uwebtools</h1>
         <input id="s" placeholder="Search..." />
-    </header>
+    </div>
     <div id="e">
         <textarea id="i" wrap="off"></textarea>
         <div id="g"></div>
@@ -63,7 +61,7 @@
     </div>
 </div>
 <script>
-    // #a = app, #e = editors, #g = gap, #i = input, #o = output, #s = search
+    // #a = app, #e = editors, #g = gap, #h = header, #i = input, #o = output, #s = search
     (() => {
         const getElementById = (id) => document.getElementById(id);
 
