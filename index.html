@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>uwebtools</title>
+<style>
+    * {
+        touch-action: manipulation;
+        margin: 0px;
+        padding: 0px;
+        font: normal 16px arial, sans-serif;
+        border: none;
+        color: black;
+        box-sizing: border-box;
+    }
+    h1 {
+        font: bold 32px arial, sans-serif;
+    }
+    #a {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        height: 100dvh;
+        width: 100%;
+        overflow: hidden;
+        padding: 5px;
+    }
+    #e, header {
+        display: flex;
+        margin: 5px;
+    }
+    #e, #s, #o {
+        flex: 1;
+    }
+    header {
+        gap: 10px;
+    }
+    #i, #o {
+        font-family: monospace;
+    }
+    #i, #o, input {
+        padding: 7px;
+        border: 2px solid black;
+        border-radius: 7px;
+        resize: none;
+    }
+    #i {
+        width: 50%;
+    }
+    #g {
+        width: 10px;
+        cursor: col-resize;
+    }
+</style>
+<div id="a">
+    <header>
+        <h1>uwebtools</h1>
+        <input id="s" placeholder="Search..." />
+    </header>
+    <div id="e">
+        <textarea id="i" wrap="off"></textarea>
+        <div id="g"></div>
+        <textarea id="o" wrap="off" readonly></textarea>
+    </div>
+</div>
+<script>
+    // #a = app, #e = editors, #g = gap, #i = input, #o = output, #s = search
+    (() => {
+        const getElementById = (id) => document.getElementById(id);
+
+        const gapEl = getElementById("g");
+        const inputEl = getElementById("i");
+        const outputEl = getElementById("o");
+        const searchEl = getElementById("s");
+
+        let inputTimeout, toolFn, searchResults = [];
+
+        const tools = [
+            ["Base64 Decode", (t) => atob(t)],
+            ["Base64 Encode", (t) => btoa(t)],
+            ["Caesar Cipher", (t) => `Shift  Message\n${Array.from({ length: 25 }, (_, i) => (`    ${i + 1}  `.slice(-7) + t.replace(/[a-z]/gi, (c) => String.fromCharCode(((c.charCodeAt() & 31) + i) % 26 + (c > "Z" ? 97 : 65))))).join("\n")}`],
+            ["Certain Length Text", (t) => "a".repeat(parseInt(t))],
+            ["HTML Data URL", async (t) => {
+                const r = Response;
+                const array = new Uint8Array(await new r(new r(t).body.pipeThrough(new CompressionStream("deflate"))).arrayBuffer());
+                let base64 = "";
+                for (let i = 0; i < array.length; i += 0x4000) {
+                    base64 += String.fromCharCode(...array.subarray(i, i + 0x4000));
+                }
+                return `data:text/html,<script>a=Uint8Array,r=Response,new r(new r(a.from(atob("${btoa(base64)}"),c=>c.charCodeAt())).body.pipeThrough(new DecompressionStream("deflate"))).text().then((t,d=document)=>(d.open(),d.write(t),d.close()))<\/script>`;
+            }],
+            ["JSON Beautify", (t) => JSON.stringify(JSON.parse(t), null, 4)],
+            ["JSON Minify", (t) => JSON.stringify(JSON.parse(t))],
+            ["Unicode Inspector", (t) => {
+                const charMap = new Map();
+                for (const char of t) {
+                    charMap.set(char, (charMap.get(char) || 0) + 1);
+                }
+                return "Count  Code    Char\n" + Array.from(charMap).sort(
+                    ([a], [b]) => a.codePointAt() - b.codePointAt()
+                ).map(([char, count]) => `    ${count}  `.slice(-7) + `${char.codePointAt().toString(16).toUpperCase()}       `.slice(0, 8) + char.replace(/\n/g, "\\n").replace(/\t/g, "\\t")).join("\n");
+            }],
+            ["URL Decode", (t) => decodeURIComponent(t)],
+            ["URL Encode", (t) => encodeURIComponent(t)],
+            ["Word Count", (t) => `${(t.match(/\S+/g) || []).length} word(s), ${t.length} char(s)`],
+        ];
+
+        const onInputInput = (e) => {
+            clearTimeout(inputTimeout);
+            if (toolFn) {
+                inputTimeout = setTimeout(async () => {
+                    try {
+                        outputEl.value = await toolFn(inputEl.value);
+                    } catch (err) {
+                        outputEl.value = "Error: " + err.message;
+                    }
+                }, 200);
+            } else {
+                outputEl.value = "No tool selected";
+            }
+        }
+        inputEl.oninput = onInputInput;
+
+        const onSearchInput = (e) => {
+            const searchTerm = e?.target.value.toLowerCase() || "";
+            searchResults = tools.filter(([name]) => name.toLowerCase().includes(searchTerm));
+            outputEl.value = "Tools:\n" + searchResults.map(([name]) => name).join("\n");
+        }
+        searchEl.onfocus = searchEl.oninput = onSearchInput;
+        onSearchInput();
+
+        searchEl.onblur = (e) => {
+            const resultsLength = searchResults.length;
+            if (resultsLength > 0 && resultsLength < tools.length) {
+                [searchEl.value, toolFn] = searchResults[0];
+            } else {
+                toolFn = null;
+            }
+            onInputInput();
+        }
+
+        gapEl.onpointerdown = (e) => {
+            gapEl.setPointerCapture(e.pointerId);
+            gapEl.onpointermove = (e) => inputEl.style.width = e.clientX + "px";
+            gapEl.onpointerup = (e) => gapEl.onpointermove = null;
+        };
+
+        searchEl.focus();
+    })();
+</script>
