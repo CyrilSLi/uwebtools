@@ -92,6 +92,7 @@
             }],
             ["JSON Beautify", (t) => JSON.stringify(JSON.parse(t), null, 4)],
             ["JSON Minify", (t) => JSON.stringify(JSON.parse(t))],
+            ["Template Literal Escape", (t) => t.replace(/`|\\|\${/g, (m) => "\\" + m)],
             ["Unicode Inspector", (t) => {
                 const charMap = new Map();
                 for (const char of t) {
