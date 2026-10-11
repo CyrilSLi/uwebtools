@@ -92,6 +92,7 @@
             }],
             ["JSON Beautify", (t) => JSON.stringify(JSON.parse(t), null, 4)],
             ["JSON Minify", (t) => JSON.stringify(JSON.parse(t))],
+            ["Python List Processing", (t) => `a="""${t.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}""".splitlines();print(a)`],
             ["Template Literal Escape", (t) => t.replace(/`|\\|\${/g, (m) => "\\" + m)],
             ["Unicode Inspector", (t) => {
                 const charMap = new Map();
